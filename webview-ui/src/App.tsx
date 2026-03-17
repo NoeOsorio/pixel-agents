@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { BottomToolbar } from './components/BottomToolbar.js';
+import { CrtSidebar } from './components/CrtSidebar.js';
 import { DebugView } from './components/DebugView.js';
 import { ZoomControls } from './components/ZoomControls.js';
 import { PULSE_ANIMATION_DURATION_SEC } from './constants.js';
@@ -227,9 +228,18 @@ function App() {
 
   return (
     <div
-      ref={containerRef}
-      style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+      }}
     >
+      <div
+        ref={containerRef}
+        style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0 }}
+      >
       <style>{`
         @keyframes pixel-agents-pulse {
           0%, 100% { opacity: 1; }
@@ -423,6 +433,13 @@ function App() {
           </div>
         </div>
       )}
+      </div>
+
+      <CrtSidebar
+        selectedAgentId={selectedAgent}
+        agentTools={agentTools}
+        agentStatuses={agentStatuses}
+      />
     </div>
   );
 }

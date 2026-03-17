@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { CHARACTER_SITTING_OFFSET_PX, TOOL_OVERLAY_VERTICAL_OFFSET } from '../../constants.js';
 import type { SubagentCharacter } from '../../hooks/useExtensionMessages.js';
+import { getActivityLabel } from '../../utils/activityText.js';
 import type { OfficeState } from '../engine/officeState.js';
 import type { ToolActivity } from '../types.js';
 import { CharacterState, TILE_SIZE } from '../types.js';
@@ -18,29 +19,6 @@ interface ToolOverlayProps {
   alwaysShowOverlay: boolean;
 }
 
-/** Derive a short human-readable activity string from tools/status */
-function getActivityText(
-  agentId: number,
-  agentTools: Record<number, ToolActivity[]>,
-  isActive: boolean,
-): string {
-  const tools = agentTools[agentId];
-  if (tools && tools.length > 0) {
-    // Find the latest non-done tool
-    const activeTool = [...tools].reverse().find((t) => !t.done);
-    if (activeTool) {
-      if (activeTool.permissionWait) return 'Needs approval';
-      return activeTool.status;
-    }
-    // All tools done but agent still active (mid-turn) — keep showing last tool status
-    if (isActive) {
-      const lastTool = tools[tools.length - 1];
-      if (lastTool) return lastTool.status;
-    }
-  }
-
-  return 'Idle';
-}
 
 export function ToolOverlay({
   officeState,
@@ -112,7 +90,7 @@ export function ToolOverlay({
             activityText = sub ? sub.label : 'Subtask';
           }
         } else {
-          activityText = getActivityText(id, agentTools, ch.isActive);
+          activityText = getActivityLabel(agentTools[id], undefined).text;
         }
 
         // Determine dot color
@@ -149,10 +127,10 @@ export function ToolOverlay({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                background: 'var(--pixel-bg)',
+                background: 'var(--pixel-overlay-bg)',
                 border: isSelected
                   ? '2px solid var(--pixel-border-light)'
-                  : '2px solid var(--pixel-border)',
+                  : '2px solid var(--pixel-overlay-border)',
                 borderRadius: 0,
                 padding: isSelected ? '3px 6px 3px 8px' : '3px 8px',
                 boxShadow: 'var(--pixel-shadow)',
@@ -177,7 +155,11 @@ export function ToolOverlay({
                   style={{
                     fontSize: isSub ? '20px' : '22px',
                     fontStyle: isSub ? 'italic' : undefined,
-                    color: 'var(--vscode-foreground)',
+                    color: hasPermission
+                      ? 'var(--pixel-overlay-permission)'
+                      : isActive && hasActiveTools
+                        ? 'var(--pixel-overlay-active)'
+                        : 'var(--pixel-overlay-text)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     display: 'block',

@@ -50,6 +50,23 @@
   --pixel-overlay-z: 41;
   --pixel-overlay-selected-z: 42;
   --pixel-controls-z: 50;
+
+  /* Overlay label contrast */
+  --pixel-overlay-bg: rgba(10, 10, 20, 0.96);
+  --pixel-overlay-border: #5a5a8a;
+  --pixel-overlay-text: rgba(255, 255, 255, 0.92);
+  --pixel-overlay-permission: #ffcc44;
+  --pixel-overlay-active: #8abfff;
+
+  /* CRT sidebar */
+  --crt-sidebar-width: 240px;
+  --crt-text: #33ff66;
+  --crt-text-dim: #1a7a33;
+  --crt-screen-bg: #060a06;
+  --crt-screen-border: #0d1a0d;
+  --crt-no-signal: #1a3a1a;
+  --crt-bezel: #1a1a2a;
+  --crt-bezel-border: #2e2e44;
 }
 
 html,
@@ -64,4 +81,40 @@ body,
 
 * {
   font-family: 'FS Pixel Sans', sans-serif;
+}
+
+/* CRT scanline overlay */
+.crt-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.crt-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes crt-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes crt-flicker {
+  0%, 100% { opacity: 0.45; }
+  47% { opacity: 0.45; }
+  48% { opacity: 0.25; }
+  49% { opacity: 0.45; }
+  96% { opacity: 0.45; }
+  97% { opacity: 0.3; }
+  98% { opacity: 0.45; }
 }
