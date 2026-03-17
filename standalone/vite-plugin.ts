@@ -1,19 +1,19 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
 import type { Plugin, ViteDevServer, WebSocketClient } from 'vite';
 
 import {
   loadCharacterSprites,
   loadDefaultLayout,
-  loadFloorTiles,
-  loadFurnitureAssets,
-  loadWallTiles,
+  type LoadedAssets,
   type LoadedCharacterSprites,
   type LoadedFloorTiles,
   type LoadedWallTiles,
-  type LoadedAssets,
+  loadFloorTiles,
+  loadFurnitureAssets,
+  loadWallTiles,
 } from '../shared/assetLoader.js';
+import { JSONL_POLL_INTERVAL_MS } from '../shared/constants.js';
 import { ensureProjectScan, readNewLines, startFileWatching } from '../shared/fileWatcher.js';
 import type { LayoutWatcher } from '../shared/layoutPersistence.js';
 import {
@@ -24,10 +24,9 @@ import {
 } from '../shared/layoutPersistence.js';
 import { cancelPermissionTimer, cancelWaitingTimer } from '../shared/timerManager.js';
 import type { AgentState } from '../shared/types.js';
-import { JSONL_POLL_INTERVAL_MS } from '../shared/constants.js';
-import { getProjectDir } from './projectDiscovery.js';
 import type { ManagedProcess } from './processManager.js';
 import { killAllProcesses, launchClaudeProcess } from './processManager.js';
+import { getProjectDir } from './projectDiscovery.js';
 import { loadSeats, saveSeats } from './seatPersistence.js';
 import { loadSettings, saveSettings } from './settingsPersistence.js';
 
@@ -139,6 +138,54 @@ export function pixelAgentsPlugin(options: PixelAgentsPluginOptions = {}): Plugi
         };
       }
 
+      function adoptExistingJsonlFiles(projectDir: string): void {
+        let files: string[];
+        try {
+          files = fs
+            .readdirSync(projectDir)
+            .filter((f) => f.endsWith('.jsonl'))
+            .map((f) => path.join(projectDir, f));
+        } catch {
+          return;
+        }
+
+        for (const filePath of files) {
+          if (knownJsonlFiles.has(filePath)) continue;
+          knownJsonlFiles.add(filePath);
+
+          const id = nextAgentId.current++;
+          const agent: AgentState = {
+            id,
+            projectDir,
+            jsonlFile: filePath,
+            fileOffset: 0,
+            lineBuffer: '',
+            activeToolIds: new Set(),
+            activeToolStatuses: new Map(),
+            activeToolNames: new Map(),
+            activeSubagentToolIds: new Map(),
+            activeSubagentToolNames: new Map(),
+            isWaiting: false,
+            permissionSent: false,
+            hadToolsInTurn: false,
+          };
+          agents.set(id, agent);
+          console.log(`[Pixel Agents] Adopted existing session: ${path.basename(filePath)} → agent ${id}`);
+
+          startFileWatching(
+            id,
+            filePath,
+            agents,
+            fileWatchers,
+            pollingTimers,
+            waitingTimers,
+            permissionTimers,
+            broadcastTarget(),
+          );
+          readNewLines(id, agents, waitingTimers, permissionTimers, broadcastTarget());
+        }
+      }
+
       async function handleWebviewReady(client: WebSocketClient): Promise<void> {
         // Ensure assets are loaded
         await assetLoadPromise;
@@ -183,6 +230,25 @@ export function pixelAgentsPlugin(options: PixelAgentsPluginOptions = {}): Plugi
               layout: newLayout,
             } as Record<string, unknown>);
           });
+        }
+
+        // Auto-discover existing Claude sessions from all project directories
+        const claudeProjectsDir = getProjectDir(projectPath);
+        adoptExistingJsonlFiles(claudeProjectsDir);
+
+        // Also scan sibling project dirs so agents in other workspaces are visible
+        const claudeRoot = path.dirname(claudeProjectsDir);
+        try {
+          for (const entry of fs.readdirSync(claudeRoot, { withFileTypes: true })) {
+            if (entry.isDirectory()) {
+              const dir = path.join(claudeRoot, entry.name);
+              if (dir !== claudeProjectsDir) {
+                adoptExistingJsonlFiles(dir);
+              }
+            }
+          }
+        } catch {
+          /* ~/.claude/projects may not exist or have permission issues */
         }
 
         // Send existing agents
