@@ -138,16 +138,28 @@ export function pixelAgentsPlugin(options: PixelAgentsPluginOptions = {}): Plugi
         };
       }
 
+      // Only adopt JSONL files modified within this window (active sessions)
+      const ACTIVE_SESSION_WINDOW_MS = 4 * 60 * 60 * 1000; // 4 hours
+
       function adoptExistingJsonlFiles(projectDir: string): void {
-        let files: string[];
+        let entries: fs.Dirent[];
         try {
-          files = fs
-            .readdirSync(projectDir)
-            .filter((f) => f.endsWith('.jsonl'))
-            .map((f) => path.join(projectDir, f));
+          entries = fs.readdirSync(projectDir, { withFileTypes: true });
         } catch {
           return;
         }
+
+        const cutoff = Date.now() - ACTIVE_SESSION_WINDOW_MS;
+        const files = entries
+          .filter((e) => e.isFile() && e.name.endsWith('.jsonl'))
+          .map((e) => path.join(projectDir, e.name))
+          .filter((filePath) => {
+            try {
+              return fs.statSync(filePath).mtimeMs >= cutoff;
+            } catch {
+              return false;
+            }
+          });
 
         for (const filePath of files) {
           if (knownJsonlFiles.has(filePath)) continue;
@@ -232,24 +244,9 @@ export function pixelAgentsPlugin(options: PixelAgentsPluginOptions = {}): Plugi
           });
         }
 
-        // Auto-discover existing Claude sessions from all project directories
+        // Auto-discover active Claude sessions for this project
         const claudeProjectsDir = getProjectDir(projectPath);
         adoptExistingJsonlFiles(claudeProjectsDir);
-
-        // Also scan sibling project dirs so agents in other workspaces are visible
-        const claudeRoot = path.dirname(claudeProjectsDir);
-        try {
-          for (const entry of fs.readdirSync(claudeRoot, { withFileTypes: true })) {
-            if (entry.isDirectory()) {
-              const dir = path.join(claudeRoot, entry.name);
-              if (dir !== claudeProjectsDir) {
-                adoptExistingJsonlFiles(dir);
-              }
-            }
-          }
-        } catch {
-          /* ~/.claude/projects may not exist or have permission issues */
-        }
 
         // Send existing agents
         const agentIds: number[] = [...agents.keys()].sort((a, b) => a - b);
