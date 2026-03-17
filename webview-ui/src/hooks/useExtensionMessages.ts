@@ -198,10 +198,11 @@ export function useExtensionMessages(
         const id = msg.id as number;
         const toolId = msg.toolId as string;
         const status = msg.status as string;
+        const fullStatus = msg.fullStatus as string | undefined;
         setAgentTools((prev) => {
           const list = prev[id] || [];
           if (list.some((t) => t.toolId === toolId)) return prev;
-          return { ...prev, [id]: [...list, { toolId, status, done: false }] };
+          return { ...prev, [id]: [...list, { toolId, status, fullStatus, done: false }] };
         });
         const toolName = extractToolName(status);
         os.setAgentTool(id, toolName);

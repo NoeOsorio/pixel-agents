@@ -57,6 +57,22 @@ export function formatToolStatus(toolName: string, input: Record<string, unknown
   }
 }
 
+export function formatToolStatusFull(toolName: string, input: Record<string, unknown>): string | undefined {
+  switch (toolName) {
+    case 'Bash': {
+      const cmd = (input.command as string) || '';
+      return cmd ? `Running: ${cmd}` : undefined;
+    }
+    case 'Task':
+    case 'Agent': {
+      const desc = typeof input.description === 'string' ? input.description : '';
+      return desc ? `Subtask: ${desc}` : undefined;
+    }
+    default:
+      return undefined;
+  }
+}
+
 export function processTranscriptLine(
   agentId: number,
   line: string,
@@ -89,6 +105,7 @@ export function processTranscriptLine(
           if (block.type === 'tool_use' && block.id) {
             const toolName = block.name || '';
             const status = formatToolStatus(toolName, block.input || {});
+            const fullStatus = formatToolStatusFull(toolName, block.input || {});
             console.log(`[Pixel Agents] Agent ${agentId} tool start: ${block.id} ${status}`);
             agent.activeToolIds.add(block.id);
             agent.activeToolStatuses.set(block.id, status);
@@ -101,6 +118,7 @@ export function processTranscriptLine(
               id: agentId,
               toolId: block.id,
               status,
+              ...(fullStatus !== undefined && { fullStatus }),
             });
           }
         }
