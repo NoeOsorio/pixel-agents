@@ -156,6 +156,9 @@ function App() {
 
   const handleSelectAgent = useCallback((id: number) => {
     vscode.postMessage({ type: 'focusAgent', id });
+    const os = getOfficeState();
+    os.selectedAgentId = id;
+    os.cameraFollowId = id;
   }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -439,6 +442,11 @@ function App() {
         officeState={getOfficeState()}
         agentTools={agentTools}
         agentStatuses={agentStatuses}
+        subagentTools={subagentTools}
+        agents={agents}
+        subagentCharacters={subagentCharacters}
+        onSelectAgent={handleSelectAgent}
+        onCloseAgent={handleCloseAgent}
       />
     </div>
   );
