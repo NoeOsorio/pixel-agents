@@ -48,16 +48,22 @@
       ]
     }
   },
+  "bin": {
+    "pixel-agents": "./dist/standalone/cli.js"
+  },
   "scripts": {
     "vscode:prepublish": "npm run package",
     "build:webview": "cd webview-ui && npm run build",
+    "build:standalone": "node standalone/esbuild-standalone.js",
     "compile": "npm run check-types && npm run lint && node esbuild.js && npm run build:webview",
     "build": "npm run compile",
+    "standalone": "node dist/standalone/cli.js",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "package": "npm run check-types && npm run lint && node esbuild.js --production && npm run build:webview",
     "check-types": "tsc --noEmit",
+    "check-types:standalone": "tsc --noEmit --project standalone/tsconfig.json",
     "prepare": "husky",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -69,21 +75,27 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@types/express": "^5.0.6",
     "@types/node": "25.x",
     "@types/pngjs": "^6.0.5",
     "@types/vscode": "^1.105.0",
+    "@types/ws": "^8.18.1",
     "esbuild": "^0.27.2",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "express": "^5.2.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.3.2",
     "npm-run-all": "^4.1.5",
+    "open": "^11.0.0",
     "pngjs": "^7.0.0",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.54.0",
+    "vite": "^8.0.0",
+    "ws": "^8.19.0"
   },
   "lint-staged": {
     "src/**/*.ts": "eslint --fix",

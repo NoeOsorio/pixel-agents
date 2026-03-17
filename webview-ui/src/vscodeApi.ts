@@ -1,3 +1,3 @@
-declare function acquireVsCodeApi(): { postMessage(msg: unknown): void };
+import { postMessage } from './messageTransport.js';
 
-export const vscode = acquireVsCodeApi();
+export const vscode = { postMessage };

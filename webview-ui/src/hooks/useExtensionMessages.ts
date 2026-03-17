@@ -395,6 +395,18 @@ export function useExtensionMessages(
         } catch (err) {
           console.error(`❌ Webview: Error processing furnitureAssetsLoaded:`, err);
         }
+      } else if (msg.type === 'importLayoutError') {
+        console.error('[Webview] Import layout error:', msg.message as string);
+        window.alert(`Import failed: ${msg.message as string}`);
+      } else if (msg.type === 'exportLayoutData') {
+        const data = msg.data as string;
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pixel-agents-layout.json';
+        a.click();
+        URL.revokeObjectURL(url);
       }
     };
     window.addEventListener('message', handler);
