@@ -1,19 +1,34 @@
+import { useEffect, useState } from 'react';
+
+import type { OfficeState } from '../office/engine/officeState.js';
 import type { ToolActivity } from '../office/types.js';
 import { getActivityLabel } from '../utils/activityText.js';
 
 interface CrtSidebarProps {
-  selectedAgentId: number | null;
+  officeState: OfficeState;
   agentTools: Record<number, ToolActivity[]>;
   agentStatuses: Record<number, string>;
 }
 
-export function CrtSidebar({ selectedAgentId, agentTools, agentStatuses }: CrtSidebarProps) {
+export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSidebarProps) {
+  // RAF loop to stay in sync with imperative officeState (same pattern as ToolOverlay)
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    let rafId = 0;
+    const tick = () => {
+      setTick((n) => n + 1);
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
+  const selectedAgentId = officeState.selectedAgentId;
   const hasAgent = selectedAgentId !== null;
 
-  const label =
-    hasAgent && selectedAgentId !== null
-      ? getActivityLabel(agentTools[selectedAgentId], agentStatuses[selectedAgentId])
-      : null;
+  const label = hasAgent
+    ? getActivityLabel(agentTools[selectedAgentId], agentStatuses[selectedAgentId])
+    : null;
 
   return (
     <div

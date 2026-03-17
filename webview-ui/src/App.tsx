@@ -436,7 +436,7 @@ function App() {
       </div>
 
       <CrtSidebar
-        selectedAgentId={selectedAgent}
+        officeState={getOfficeState()}
         agentTools={agentTools}
         agentStatuses={agentStatuses}
       />
