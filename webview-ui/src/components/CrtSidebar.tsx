@@ -40,8 +40,8 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
         borderLeft: '2px solid var(--crt-bezel-border)',
         display: 'flex',
         flexDirection: 'column',
-        padding: 12,
-        gap: 8,
+        padding: 16,
+        gap: 10,
         boxSizing: 'border-box',
         borderRadius: 0,
       }}
@@ -50,8 +50,8 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
       <div
         style={{
           color: 'var(--crt-text-dim)',
-          fontSize: 10,
-          letterSpacing: 2,
+          fontSize: 13,
+          letterSpacing: 3,
           fontFamily: "'FS Pixel Sans', monospace",
           userSelect: 'none',
         }}
@@ -65,10 +65,10 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
         style={{
           background: 'var(--crt-screen-bg)',
           flex: 1,
-          padding: 12,
+          padding: 16,
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
+          gap: 12,
           border: '2px solid var(--crt-screen-border)',
           boxShadow: 'inset 2px 2px 0px #000000',
           boxSizing: 'border-box',
@@ -82,7 +82,7 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
             {/* Agent header */}
             <div
               style={{
-                fontSize: 14,
+                fontSize: 20,
                 color: 'var(--crt-text)',
                 userSelect: 'none',
               }}
@@ -93,7 +93,7 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
             {/* Separator */}
             <div
               style={{
-                fontSize: 10,
+                fontSize: 13,
                 color: 'var(--crt-text-dim)',
                 userSelect: 'none',
               }}
@@ -102,7 +102,7 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
             </div>
 
             {/* Status */}
-            <div style={{ flex: 1, fontSize: 12 }}>
+            <div style={{ flex: 1, fontSize: 18 }}>
               {label.hasPermission ? (
                 <span style={{ color: 'var(--pixel-overlay-permission)' }}>
                   AWAITING INPUT
@@ -116,24 +116,17 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
                     _
                   </span>
                 </span>
-              ) : label.isWaiting ? (
-                <span style={{ color: 'var(--crt-text)' }}>
-                  TASK COMPLETE{' '}
-                  <span style={{ color: 'var(--crt-text)' }}>&#10003;</span>
-                </span>
-              ) : label.isActive && label.text ? (
+              ) : label.fullText && label.fullText !== 'Idle' ? (
                 <span
                   style={{
-                    color: 'var(--crt-text)',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    wordBreak: 'break-word',
+                    color: label.isActive ? 'var(--pixel-overlay-active)' : 'var(--crt-text)',
+                    display: 'block',
+                    overflow: 'auto',
+                    wordBreak: 'break-all',
+                    whiteSpace: 'pre-wrap',
                   }}
                 >
-                  {label.text}
+                  {label.fullText}
                 </span>
               ) : (
                 <span style={{ color: 'var(--crt-text)' }}>
@@ -154,7 +147,7 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
             {/* Bottom status decoration */}
             <div
               style={{
-                fontSize: 10,
+                fontSize: 13,
                 color: 'var(--crt-text-dim)',
                 userSelect: 'none',
                 marginTop: 'auto',
@@ -171,7 +164,7 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 16,
+              fontSize: 24,
               color: 'var(--crt-no-signal)',
               userSelect: 'none',
               animation: 'crt-flicker 4s ease-in-out infinite',
@@ -193,7 +186,7 @@ export function CrtSidebar({ officeState, agentTools, agentStatuses }: CrtSideba
       >
         <span
           style={{
-            fontSize: 9,
+            fontSize: 12,
             color: 'var(--crt-text-dim)',
             fontFamily: "'FS Pixel Sans', monospace",
             userSelect: 'none',
