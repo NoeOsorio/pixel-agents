@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { playDoneSound, setSoundEnabled } from '../notificationSound.js';
 import type { OfficeState } from '../office/engine/officeState.js';
@@ -57,6 +57,8 @@ export interface ExtensionMessageState {
   layoutWasReset: boolean;
   loadedAssets?: { catalog: FurnitureAsset[]; sprites: Record<string, string[][]> };
   workspaceFolders: WorkspaceFolder[];
+  agentNames: Record<number, string>;
+  renameAgent: (id: number, name: string) => void;
 }
 
 function saveAgentSeats(os: OfficeState): void {
@@ -87,6 +89,7 @@ export function useExtensionMessages(
     { catalog: FurnitureAsset[]; sprites: Record<string, string[][]> } | undefined
   >();
   const [workspaceFolders, setWorkspaceFolders] = useState<WorkspaceFolder[]>([]);
+  const [agentNames, setAgentNames] = useState<Record<number, string>>({});
 
   // Track whether initial layout has been loaded (ref to avoid re-render)
   const layoutReadyRef = useRef(false);
@@ -99,6 +102,7 @@ export function useExtensionMessages(
       hueShift?: number;
       seatId?: string;
       folderName?: string;
+      name?: string;
     }> = [];
 
     const handler = (e: MessageEvent) => {
@@ -122,7 +126,7 @@ export function useExtensionMessages(
         }
         // Add buffered agents now that layout (and seats) are correct
         for (const p of pendingAgents) {
-          os.addAgent(p.id, p.palette, p.hueShift, p.seatId, true, p.folderName);
+          os.addAgent(p.id, p.palette, p.hueShift, p.seatId, true, p.folderName, p.name);
         }
         pendingAgents = [];
         layoutReadyRef.current = true;
@@ -136,9 +140,13 @@ export function useExtensionMessages(
       } else if (msg.type === 'agentCreated') {
         const id = msg.id as number;
         const folderName = msg.folderName as string | undefined;
+        const name = msg.name as string | undefined;
         setAgents((prev) => (prev.includes(id) ? prev : [...prev, id]));
         setSelectedAgent(id);
-        os.addAgent(id, undefined, undefined, undefined, undefined, folderName);
+        if (name) {
+          setAgentNames((prev) => ({ ...prev, [id]: name }));
+        }
+        os.addAgent(id, undefined, undefined, undefined, undefined, folderName, name);
         saveAgentSeats(os);
       } else if (msg.type === 'agentClosed') {
         const id = msg.id as number;
@@ -162,6 +170,12 @@ export function useExtensionMessages(
           delete next[id];
           return next;
         });
+        setAgentNames((prev) => {
+          if (!(id in prev)) return prev;
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
         // Remove all sub-agent characters belonging to this agent
         os.removeAllSubagents(id);
         setSubagentCharacters((prev) => prev.filter((s) => s.parentAgentId !== id));
@@ -173,6 +187,7 @@ export function useExtensionMessages(
           { palette?: number; hueShift?: number; seatId?: string }
         >;
         const folderNames = (msg.folderNames || {}) as Record<number, string>;
+        const incomingNames = (msg.agentNames || {}) as Record<number, string>;
         // Buffer agents — they'll be added in layoutLoaded after seats are built
         for (const id of incoming) {
           const m = meta[id];
@@ -182,7 +197,12 @@ export function useExtensionMessages(
             hueShift: m?.hueShift,
             seatId: m?.seatId,
             folderName: folderNames[id],
+            name: incomingNames[id],
           });
+        }
+        // Merge names into state
+        if (Object.keys(incomingNames).length > 0) {
+          setAgentNames((prev) => ({ ...prev, ...incomingNames }));
         }
         setAgents((prev) => {
           const ids = new Set(prev);
@@ -415,6 +435,20 @@ export function useExtensionMessages(
     return () => window.removeEventListener('message', handler);
   }, [getOfficeState]);
 
+  const renameAgent = useCallback(
+    (id: number, name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      vscode.postMessage({ type: 'renameAgent', id, name: trimmed });
+      setAgentNames((prev) => ({ ...prev, [id]: trimmed }));
+      const ch = getOfficeState().characters.get(id);
+      if (ch) {
+        ch.name = trimmed;
+      }
+    },
+    [getOfficeState],
+  );
+
   return {
     agents,
     selectedAgent,
@@ -426,5 +460,7 @@ export function useExtensionMessages(
     layoutWasReset,
     loadedAssets,
     workspaceFolders,
+    agentNames,
+    renameAgent,
   };
 }

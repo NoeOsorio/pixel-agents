@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { CRT_ROSTER_MAX_HEIGHT } from '../constants.js';
+import { AGENT_NAME_MAX_LENGTH, CRT_ROSTER_MAX_HEIGHT, CRT_SUBAGENT_LABEL_MAX_WIDTH } from '../constants.js';
 import type { SubagentCharacter } from '../hooks/useExtensionMessages.js';
 import type { OfficeState } from '../office/engine/officeState.js';
 import type { ToolActivity } from '../office/types.js';
@@ -15,6 +15,8 @@ interface CrtSidebarProps {
   subagentCharacters: SubagentCharacter[];
   onSelectAgent: (id: number) => void;
   onCloseAgent: (id: number) => void;
+  agentNames: Record<number, string>;
+  onRenameAgent: (id: number, name: string) => void;
 }
 
 export function CrtSidebar({
@@ -26,6 +28,8 @@ export function CrtSidebar({
   subagentCharacters,
   onSelectAgent,
   onCloseAgent,
+  agentNames,
+  onRenameAgent,
 }: CrtSidebarProps) {
   // RAF loop to stay in sync with imperative officeState (same pattern as ToolOverlay)
   const [, setTick] = useState(0);
@@ -39,7 +43,17 @@ export function CrtSidebar({
     return () => cancelAnimationFrame(rafId);
   }, []);
 
+  // Editable name state for the selected agent header
+  const [editName, setEditName] = useState('');
+
   const selectedAgentId = officeState.selectedAgentId;
+
+  // Sync editName when selected agent changes
+  useEffect(() => {
+    if (selectedAgentId !== null && selectedAgentId >= 0) {
+      setEditName(agentNames[selectedAgentId] ?? '');
+    }
+  }, [selectedAgentId, agentNames]);
   const hasAgent = selectedAgentId !== null;
 
   // For sub-agents (negative IDs), look up tools via subagentMeta
@@ -182,7 +196,7 @@ export function CrtSidebar({
                   onClick={() => onSelectAgent(id)}
                 >
                   <span style={{ flexShrink: 0 }}>{isSelected ? '>' : ' '}</span>
-                  <span style={{ flex: 1 }}>{`AGENT ${id}`}</span>
+                  <span style={{ flex: 1 }}>{agentNames[id] ?? `Agent ${id}`}</span>
                   <span
                     style={{
                       color: isActive ? 'var(--pixel-overlay-active)' : 'var(--crt-text-dim)',
@@ -216,10 +230,10 @@ export function CrtSidebar({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        maxWidth: 120,
+                        maxWidth: CRT_SUBAGENT_LABEL_MAX_WIDTH,
                       }}
                     >
-                      {s.label.length > 20 ? s.label.slice(0, 20) : s.label}
+                      {s.label.length > AGENT_NAME_MAX_LENGTH ? s.label.slice(0, AGENT_NAME_MAX_LENGTH) : s.label}
                     </span>
                   </div>
                 ))}
@@ -240,7 +254,7 @@ export function CrtSidebar({
           flexDirection: 'column',
           gap: 12,
           border: '2px solid var(--crt-screen-border)',
-          boxShadow: 'inset 2px 2px 0px #000000',
+          boxShadow: 'inset 2px 2px 0px #0a0a14',
           boxSizing: 'border-box',
           fontFamily: "'FS Pixel Sans', monospace",
           color: 'var(--crt-text)',
@@ -254,10 +268,58 @@ export function CrtSidebar({
               style={{
                 fontSize: 20,
                 color: 'var(--crt-text)',
-                userSelect: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
               }}
             >
-              {`> AGENT ${selectedAgentId}`}
+              <span style={{ userSelect: 'none', flexShrink: 0 }}>{'>'}</span>
+              {selectedAgentId >= 0 ? (
+                <input
+                  type="text"
+                  value={editName}
+                  maxLength={AGENT_NAME_MAX_LENGTH}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                      const trimmed = editName.trim();
+                      if (trimmed) {
+                        onRenameAgent(selectedAgentId, trimmed);
+                      } else {
+                        setEditName(agentNames[selectedAgentId] ?? '');
+                      }
+                      (e.currentTarget as HTMLInputElement).blur();
+                    } else if (e.key === 'Escape') {
+                      setEditName(agentNames[selectedAgentId] ?? '');
+                      (e.currentTarget as HTMLInputElement).blur();
+                    }
+                  }}
+                  onBlur={() => {
+                    const trimmed = editName.trim();
+                    if (trimmed) {
+                      onRenameAgent(selectedAgentId, trimmed);
+                    } else {
+                      setEditName(agentNames[selectedAgentId] ?? '');
+                    }
+                  }}
+                  style={{
+                    fontFamily: "'FS Pixel Sans', monospace",
+                    fontSize: 20,
+                    color: 'var(--crt-text)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid var(--crt-text-dim)',
+                    outline: 'none',
+                    padding: '0 2px',
+                    width: '100%',
+                    borderRadius: 0,
+                    userSelect: 'text',
+                  }}
+                />
+              ) : (
+                <span style={{ userSelect: 'none' }}>{`AGENT ${selectedAgentId}`}</span>
+              )}
             </div>
 
             {/* Separator */}

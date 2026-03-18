@@ -139,6 +139,8 @@ function App() {
     layoutWasReset,
     loadedAssets,
     workspaceFolders,
+    agentNames,
+    renameAgent,
   } = useExtensionMessages(getOfficeState, editor.setLastSavedLayout, isEditDirty);
 
   // Show migration notice once layout reset is detected
@@ -360,6 +362,7 @@ function App() {
           panRef={editor.panRef}
           onCloseAgent={handleCloseAgent}
           alwaysShowOverlay={alwaysShowOverlay}
+          agentNames={agentNames}
         />
       )}
 
@@ -447,6 +450,8 @@ function App() {
         subagentCharacters={subagentCharacters}
         onSelectAgent={handleSelectAgent}
         onCloseAgent={handleCloseAgent}
+        agentNames={agentNames}
+        onRenameAgent={renameAgent}
       />
     </div>
   );
