@@ -99,6 +99,10 @@ export const NOTIFICATION_VOLUME = 0.14;
 // ── Furniture Animation ─────────────────────────────────────
 export const FURNITURE_ANIM_INTERVAL_SEC = 0.2;
 
+// ── Agent Names ─────────────────────────────────────────────
+export const AGENT_NAME_MAX_LENGTH = 20;
+export const CRT_SUBAGENT_LABEL_MAX_WIDTH = 120;
+
 // ── Game Logic ───────────────────────────────────────────────
 export const MAX_DELTA_TIME_SEC = 0.1;
 export const WAITING_BUBBLE_DURATION_SEC = 2.0;
@@ -114,3 +118,4 @@ export const CHARACTER_HIT_HALF_WIDTH = 8;
 export const CHARACTER_HIT_HEIGHT = 24;
 export const TOOL_OVERLAY_VERTICAL_OFFSET = 32;
 export const PULSE_ANIMATION_DURATION_SEC = 1.5;
+export const CRT_ROSTER_MAX_HEIGHT = 160;

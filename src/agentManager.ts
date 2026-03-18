@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import { generateAgentName } from './agentNames.js';
 import {
   JSONL_POLL_INTERVAL_MS,
   TERMINAL_NAME_PREFIX,
@@ -81,13 +82,14 @@ export async function launchNewTerminal(
     permissionSent: false,
     hadToolsInTurn: false,
     folderName,
+    name: generateAgentName(),
   };
 
   agents.set(id, agent);
   activeAgentIdRef.current = id;
   persistAgents();
   console.log(`[Pixel Agents] Agent ${id}: created for terminal ${terminal.name}`);
-  webview?.postMessage({ type: 'agentCreated', id, folderName });
+  webview?.postMessage({ type: 'agentCreated', id, folderName, name: agent.name });
 
   ensureProjectScan(
     projectDir,
@@ -187,6 +189,7 @@ export function persistAgents(
       jsonlFile: agent.jsonlFile,
       projectDir: agent.projectDir,
       folderName: agent.folderName,
+      name: agent.name,
     });
   }
   context.workspaceState.update(WORKSPACE_KEY_AGENTS, persisted);
@@ -236,6 +239,7 @@ export function restoreAgents(
       permissionSent: false,
       hadToolsInTurn: false,
       folderName: p.folderName,
+      name: p.name ?? generateAgentName(),
     };
 
     agents.set(p.id, agent);
@@ -353,6 +357,13 @@ export function sendExistingAgents(
       folderNames[id] = agent.folderName;
     }
   }
+
+  // Include name per agent
+  const agentNames: Record<number, string> = {};
+  for (const [id, agent] of agents) {
+    agentNames[id] = agent.name;
+  }
+
   console.log(
     `[Pixel Agents] sendExistingAgents: agents=${JSON.stringify(agentIds)}, meta=${JSON.stringify(agentMeta)}`,
   );
@@ -362,6 +373,7 @@ export function sendExistingAgents(
     agents: agentIds,
     agentMeta,
     folderNames,
+    agentNames,
   });
 
   sendCurrentAgentStatuses(agents, webview);

@@ -17,6 +17,7 @@ interface ToolOverlayProps {
   panRef: React.RefObject<{ x: number; y: number }>;
   onCloseAgent: (id: number) => void;
   alwaysShowOverlay: boolean;
+  agentNames: Record<number, string>;
 }
 
 
@@ -30,6 +31,7 @@ export function ToolOverlay({
   panRef,
   onCloseAgent,
   alwaysShowOverlay,
+  agentNames,
 }: ToolOverlayProps) {
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -151,6 +153,19 @@ export function ToolOverlay({
                 />
               )}
               <div style={{ overflow: 'hidden' }}>
+                {!isSub && agentNames[id] && (
+                  <span
+                    style={{
+                      fontSize: '22px',
+                      color: 'var(--pixel-overlay-text)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: 'block',
+                    }}
+                  >
+                    {agentNames[id]}
+                  </span>
+                )}
                 <span
                   style={{
                     fontSize: isSub ? '20px' : '22px',

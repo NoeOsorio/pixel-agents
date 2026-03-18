@@ -139,6 +139,8 @@ function App() {
     layoutWasReset,
     loadedAssets,
     workspaceFolders,
+    agentNames,
+    renameAgent,
   } = useExtensionMessages(getOfficeState, editor.setLastSavedLayout, isEditDirty);
 
   // Show migration notice once layout reset is detected
@@ -156,6 +158,9 @@ function App() {
 
   const handleSelectAgent = useCallback((id: number) => {
     vscode.postMessage({ type: 'focusAgent', id });
+    const os = getOfficeState();
+    os.selectedAgentId = id;
+    os.cameraFollowId = id;
   }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -357,6 +362,7 @@ function App() {
           panRef={editor.panRef}
           onCloseAgent={handleCloseAgent}
           alwaysShowOverlay={alwaysShowOverlay}
+          agentNames={agentNames}
         />
       )}
 
@@ -439,6 +445,13 @@ function App() {
         officeState={getOfficeState()}
         agentTools={agentTools}
         agentStatuses={agentStatuses}
+        subagentTools={subagentTools}
+        agents={agents}
+        subagentCharacters={subagentCharacters}
+        onSelectAgent={handleSelectAgent}
+        onCloseAgent={handleCloseAgent}
+        agentNames={agentNames}
+        onRenameAgent={renameAgent}
       />
     </div>
   );
