@@ -139,7 +139,7 @@ export function pixelAgentsPlugin(options: PixelAgentsPluginOptions = {}): Plugi
       }
 
       // Only adopt JSONL files modified within this window (active sessions)
-      const ACTIVE_SESSION_WINDOW_MS = 4 * 60 * 60 * 1000; // 4 hours
+      const ACTIVE_SESSION_WINDOW_MS = 1 * 60 * 60 * 1000; // 1 hour
 
       function adoptExistingJsonlFiles(projectDir: string): void {
         let entries: fs.Dirent[];

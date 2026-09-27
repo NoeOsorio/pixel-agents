@@ -191,4 +191,6 @@ export interface Character {
   matrixEffectSeeds: number[];
   /** Workspace folder name (only set for multi-root workspaces) */
   folderName?: string;
+  /** Display name for this agent */
+  name?: string;
 }

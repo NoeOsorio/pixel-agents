@@ -24,6 +24,7 @@ import {
   sendWallTilesToWebview,
 } from './assetLoader.js';
 import {
+  AGENT_NAME_MAX_LENGTH,
   GLOBAL_KEY_SOUND_ENABLED,
   LAYOUT_REVISION_KEY,
   WORKSPACE_KEY_AGENT_SEATS,
@@ -108,6 +109,15 @@ export class PixelAgentsViewProvider implements vscode.WebviewViewProvider {
         // Store seat assignments in a separate key (never touched by persistAgents)
         console.log(`[Pixel Agents] saveAgentSeats:`, JSON.stringify(message.seats));
         this.context.workspaceState.update(WORKSPACE_KEY_AGENT_SEATS, message.seats);
+      } else if (message.type === 'renameAgent') {
+        const agent = this.agents.get(message.id as number);
+        if (agent) {
+          const trimmed = (message.name as string).trim().slice(0, AGENT_NAME_MAX_LENGTH);
+          if (trimmed.length > 0) {
+            agent.name = trimmed;
+            this.persistAgents();
+          }
+        }
       } else if (message.type === 'saveLayout') {
         this.layoutWatcher?.markOwnWrite();
         writeLayoutToFile(message.layout as Record<string, unknown>);
